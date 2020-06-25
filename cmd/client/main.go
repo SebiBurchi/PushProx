@@ -1,16 +1,3 @@
-// Copyright 2020 The Prometheus Authors
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -35,20 +22,21 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
+	"github.com/prometheus-community/pushprox/util"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
-	"github.com/prometheus-community/pushprox/util"
 )
 
 var (
-	myFqdn      = kingpin.Flag("fqdn", "FQDN to register with").Default(fqdn.Get()).String()
-	proxyURL    = kingpin.Flag("proxy-url", "Push proxy to talk to.").Required().String()
-	caCertFile  = kingpin.Flag("tls.cacert", "<file> CA certificate to verify peer against").String()
-	tlsCert     = kingpin.Flag("tls.cert", "<cert> Client certificate file").String()
-	tlsKey      = kingpin.Flag("tls.key", "<key> Private key file").String()
-	metricsAddr = kingpin.Flag("metrics-addr", "Serve Prometheus metrics at this address").Default(":9369").String()
+	myFqdn         = kingpin.Flag("fqdn", "FQDN to register with").Default(fqdn.Get()).String()
+	proxyURL       = kingpin.Flag("proxy-url", "Push proxy to talk to.").Required().String()
+	caCertFile     = kingpin.Flag("tls.cacert", "<file> CA certificate to verify peer against").String()
+	tlsCert        = kingpin.Flag("tls.cert", "<cert> Client certificate file").String()
+	tlsKey         = kingpin.Flag("tls.key", "<key> Private key file").String()
+	metricsAddr    = kingpin.Flag("metrics-addr", "Serve Prometheus metrics at this address").Default(":9369").String()
+	ignoreCertFile = kingpin.Flag("tls.ignoreCert", "Ignore CA certificate file").Bool()
 )
 
 var (
@@ -275,6 +263,10 @@ func main() {
 		}
 
 		tlsConfig.RootCAs = caCertPool
+	}
+
+	if *ignoreCertFile {
+		tlsConfig.InsecureSkipVerify = true
 	}
 
 	if *metricsAddr != "" {
